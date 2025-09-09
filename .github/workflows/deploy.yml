@@ -64,3 +64,11 @@ jobs:
         
         # Get service information
         kubectl get service weather-app-service
+    
+    - name: Copy WeatherApp files
+      run: |
+        WORKDIR /src
+        COPY WeatherApp/ ./WeatherApp/
+        WORKDIR /src/WeatherApp
+        RUN dotnet restore "WeatherApp.csproj"
+        RUN dotnet build "WeatherApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
