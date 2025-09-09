@@ -63,19 +63,49 @@ jobs:
         echo "Getting AKS credentials for cluster: ${{ secrets.CLUSTER_NAME }}"
         echo "Resource group: ${{ secrets.RESOURCE_GROUP }}"
         
+        # Verify Azure login and subscription
+        echo "Current subscription:"
+        az account show --output table
+        
+        # Check if the resource group exists
+        echo "Checking if resource group exists..."
+        if ! az group show --name "${{ secrets.RESOURCE_GROUP }}" --output table; then
+          echo "ERROR: Resource group '${{ secrets.RESOURCE_GROUP }}' not found"
+          echo "Available resource groups:"
+          az group list --output table
+          exit 1
+        fi
+        
+        # Check if the AKS cluster exists
+        echo "Checking if AKS cluster exists..."
+        if ! az aks show --resource-group "${{ secrets.RESOURCE_GROUP }}" --name "${{ secrets.CLUSTER_NAME }}" --output table; then
+          echo "ERROR: AKS cluster '${{ secrets.CLUSTER_NAME }}' not found in resource group '${{ secrets.RESOURCE_GROUP }}'"
+          echo "Available AKS clusters in this resource group:"
+          az aks list --resource-group "${{ secrets.RESOURCE_GROUP }}" --output table
+          exit 1
+        fi
+        
         # Get AKS credentials
+        echo "Getting AKS credentials..."
         az aks get-credentials \
           --resource-group "${{ secrets.RESOURCE_GROUP }}" \
           --name "${{ secrets.CLUSTER_NAME }}" \
           --overwrite-existing
         
+        # Verify kubectl connection
+        echo "Testing kubectl connection..."
+        kubectl cluster-info
+        
         # Update deployment with new image
+        echo "Updating deployment with image: ${{ env.IMAGE_TAG }}"
         kubectl set image deployment/weather-app \
           weather-app=${{ env.IMAGE_TAG }}
         
         # Wait for rollout to complete
+        echo "Waiting for rollout to complete..."
         kubectl rollout status deployment/weather-app --timeout=600s
         
         # Verify deployment
+        echo "Deployment status:"
         kubectl get pods -l app=weather-app
         kubectl get service weather-app-service
