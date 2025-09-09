@@ -50,10 +50,23 @@ jobs:
     - name: Deploy to AKS
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
+        # Validate required secrets
+        if [ -z "${{ secrets.RESOURCE_GROUP }}" ]; then
+          echo "ERROR: RESOURCE_GROUP secret is not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.CLUSTER_NAME }}" ]; then
+          echo "ERROR: CLUSTER_NAME secret is not set"
+          exit 1
+        fi
+        
+        echo "Getting AKS credentials for cluster: ${{ secrets.CLUSTER_NAME }}"
+        echo "Resource group: ${{ secrets.RESOURCE_GROUP }}"
+        
         # Get AKS credentials
         az aks get-credentials \
-          --resource-group ${{ secrets.RESOURCE_GROUP }} \
-          --name ${{ secrets.CLUSTER_NAME }} \
+          --resource-group "${{ secrets.RESOURCE_GROUP }}" \
+          --name "${{ secrets.CLUSTER_NAME }}" \
           --overwrite-existing
         
         # Update deployment with new image
