@@ -88,8 +88,8 @@ jobs:
         # Get AKS credentials
         echo "Getting AKS credentials..."
         az aks get-credentials \
-          --resource-group "${{ secrets.RESOURCE_GROUP }}" \
-          --name "${{ secrets.CLUSTER_NAME }}" \
+          --resource-group ${{ secrets.RESOURCE_GROUP }} \
+          --name ${{ secrets.CLUSTER_NAME }} \
           --overwrite-existing
         
         # Verify kubectl connection
